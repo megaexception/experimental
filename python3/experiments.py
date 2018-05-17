@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from collections import namedtuple
 
 
 class Subscripts:
@@ -50,7 +51,7 @@ class Subscripts:
         # TODO: if only one of (start,end,step) is None - adjust
 
 
-if __name__ == "__main__":
+def subscripts():
     x = Subscripts()
     print(x[1])
     print(x[-1])
@@ -65,3 +66,15 @@ if __name__ == "__main__":
     print(x[-1:1])
     print(x[-1::-1])
     print(x[::])
+
+
+def passwd_reader():
+    passwd_entry = namedtuple('passwd', "username password uid gid description home shell")
+    with open("/etc/passwd") as f:
+        for line in f:
+            entry = passwd_entry(*line.strip().split(':'))
+            print(f"User: {entry.username} Home: {entry.home} Shell: {entry.shell}")
+
+
+if __name__ == "__main__":
+    passwd_reader()
