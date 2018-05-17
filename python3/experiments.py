@@ -2,7 +2,16 @@
 
 
 class Foo:
-    def __getitem__(self, i):
+    """
+    Class to demonstrate subscript implementation
+    """
+
+    def __getitem__(self, i: int) -> str:
+        """
+        implement indexing for Foo class
+        :param i: index of item
+        :return: string with reference to class instance and index
+        """
         return f"requested item {i} from {self}"
 
 
