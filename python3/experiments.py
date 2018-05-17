@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from collections import namedtuple
 
 
 class Subscripts:
@@ -68,13 +67,15 @@ def subscripts():
     print(x[::])
 
 
-def passwd_reader():
-    passwd_entry = namedtuple('passwd', "username password uid gid description home shell")
-    with open("/etc/passwd") as f:
+def passwd_reader(passwd_file="/etc/passwd") -> dict:
+    passwd_entry = ["username", "password", "uid", "gid", "description", "home", "shell"]
+    results = {}
+    with open(passwd_file) as f:
         for line in f:
-            entry = passwd_entry(*line.strip().split(':'))
-            print(f"User: {entry.username} Home: {entry.home} Shell: {entry.shell}")
+            params = line.strip().split(':')
+            results[params[0]] = dict(zip(passwd_entry, params))
+    return results
 
 
 if __name__ == "__main__":
-    passwd_reader()
+    print(passwd_reader())
