@@ -4,12 +4,12 @@
 """
 from unittest import TestCase
 
-from experiments import Foo
+from experiments import Subscripts
 
 
 class TestExperiments(TestCase):
     def setUp(self):
-        self.foo = Foo()
+        self.foo = Subscripts()
 
     def testSubscriptsIndex(self):
         """
@@ -23,10 +23,10 @@ class TestExperiments(TestCase):
             self.assertIn(f"requested item {len(self.foo)+index}", self.foo[index])
         for index in [-100, 100, 500]:
             with self.assertRaises(IndexError):
-                self.foo[index]
+                _ = self.foo[index]
         for index in ['', 'foobar']:
             with self.assertRaises(KeyError):
-                self.foo[index]
+                _ = self.foo[index]
 
     def testSubcriptsSlices(self):
         """

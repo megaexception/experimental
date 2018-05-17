@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-class Foo:
+class Subscripts:
     """
     Class to demonstrate subscript implementation
     """
@@ -26,17 +26,17 @@ class Foo:
                 raise IndexError
             elif start < 0:
                 start = self.max_size + start
-            if step is None:
-                step = 1 if start >= 0 else -1
             if stop is None:
                 if i.start is None or i.start >= 0:
-                    stop = self.max_size - 1
+                    stop = self.max_size
                 else:
                     stop = 0
             elif stop < 0:
                 stop = self.max_size + i.stop
+            if step is None:
+                step = 1 if start < stop else -1
             # print(f"> {i}=> {start}:{stop}:{step}")
-            items = [i for i in range(start, min(stop, self.max_size - 1), step)]
+            items = [i for i in range(start, min(stop, self.max_size), step)]
             return f"requested items {items} of {self.max_size}"
         elif isinstance(i, int):
             if abs(i) > self.max_size:
@@ -46,10 +46,12 @@ class Foo:
             return f"requested item {i} of {self.max_size}"
         else:
             raise KeyError
+        # TODO: detect start>end and adjust step
+        # TODO: if only one of (start,end,step) is None - adjust
 
 
 if __name__ == "__main__":
-    x = Foo()
+    x = Subscripts()
     print(x[1])
     print(x[-1])
     print(x[0])
