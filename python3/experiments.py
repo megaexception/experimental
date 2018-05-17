@@ -77,5 +77,12 @@ def passwd_reader(passwd_file="/etc/passwd") -> dict:
     return results
 
 
+def nl_file(fname="/etc/passwd") -> None:
+    with open(fname) as f:
+        for index, line in enumerate(f):
+            print(f"{index:03}. {line}")
+
+
 if __name__ == "__main__":
-    print(passwd_reader())
+    # print(passwd_reader())
+    nl_file()
