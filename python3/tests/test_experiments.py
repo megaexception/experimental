@@ -4,7 +4,7 @@
 """
 from unittest import TestCase
 
-from experiments import Subscripts
+from experiments import Subscripts, passwd_reader
 
 
 class TestExperiments(TestCase):
@@ -42,9 +42,20 @@ class TestExperiments(TestCase):
                 step = 1 if start >= 0 else -1
             if stop is None:
                 if start >= 0:
-                    stop = len(self.foo) - 1
+                    stop = len(self.foo)
                 else:
                     stop = 0
             self.assertIn(
-                f"requested items {[ i for i in range(start, min(stop, len(self.foo) - 1), step)]}",
+                f"requested items {[ i for i in range(start, min(stop, len(self.foo)), step)]}",
                 subscript)
+
+    def testPasswdReader(self):
+        result = passwd_reader("passwd")
+        self.assertIsInstance(result, dict, "passwd reader must return dict")
+        self.assertEqual(len(result), 30, "test passwd file must contain 30 entries")
+        self.assertEqual(result['root'],
+                         {'username': 'root', 'password': 'x', 'uid': '0', 'gid': '0', 'description': 'root',
+                          'home': '/root', 'shell': '/bin/bash'}, "first entry for root")
+        self.assertEqual(result['dnsmasq'], {'username': 'dnsmasq', 'password': 'x', 'uid': '111', 'gid': '65534',
+                                             'description': 'dnsmasq,,,', 'home': '/var/lib/misc',
+                                             'shell': '/bin/false'}, "last entry for dnsmasq")
