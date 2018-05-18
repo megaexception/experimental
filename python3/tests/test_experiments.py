@@ -50,7 +50,7 @@ class TestExperiments(TestCase):
                 subscript)
 
     def testPasswdReader(self):
-        result = passwd_reader("passwd")
+        result = passwd_reader("tests/passwd")
         self.assertIsInstance(result, dict, "passwd reader must return dict")
         self.assertEqual(len(result), 30, "test passwd file must contain 30 entries")
         self.assertEqual(result['root'],

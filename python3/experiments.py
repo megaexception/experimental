@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+import json
+import os.path
+from urllib.parse import urlparse
+
+from requests import Session
 
 
 class Subscripts:
@@ -46,8 +51,52 @@ class Subscripts:
             return f"requested item {i} of {self.max_size}"
         else:
             raise KeyError
-        # TODO: detect start>end and adjust step
         # TODO: if only one of (start,end,step) is None - adjust
+
+
+class Retriever:
+    def __init__(self, login_url=None, auth=None, mode=None):
+        self.mode = mode
+        self.s = Session()
+        self.schema, netloc, *_ = urlparse(login_url)
+        if ":" in netloc:
+            self.host, self.port = netloc.split(":")
+        else:
+            self.host = netloc
+            self.port = 80 if self.schema == "http" else 443
+        self.cookies = self.retrieve_cookies()
+        self.auth = auth
+        for c in self.cookies:
+            self.s.cookies.set(c, self.cookies[c])
+        if not self.login(login_url):
+            print("Failed to log in")
+        else:
+            print("Login seems to work")
+            self.store_cookies(self.s.cookies.get_dict())
+
+    def retrieve_cookies(self) -> dict:
+        if os.path.exists(f"data/{self.host}.cookies"):
+            with open(f"data/{self.host}.cookies") as f:
+                return json.load(f)
+
+    def store_cookies(self, cookies: dict) -> None:
+        with open(f"data/{self.host}.cookies", "wt") as f:
+            json.dump(cookies, f)
+
+    def login(self, login_url: str) -> bool:
+        try:
+            if self.mode == "JSON":
+                res = self.s.post(login_url, json=self.auth)
+            else:
+                res = self.s.post(login_url, auth=self.auth)
+            print(res.headers)
+            print(res.content)
+            res.raise_for_status()
+        except Exception as e:
+            print(e)
+            return False
+        else:
+            return True
 
 
 def subscripts():
@@ -84,5 +133,5 @@ def nl_file(fname="/etc/passwd") -> None:
 
 
 if __name__ == "__main__":
-    # print(passwd_reader())
-    nl_file()
+    # r1 = Retriever("http://127.0.0.1:8112/json", mode='JSON')
+    r2 = Retriever("https://rutracker.org/forum/login.php")

@@ -106,3 +106,4 @@ venv.bak/
 node_modules/
 
 .vscode/
+python3/data
