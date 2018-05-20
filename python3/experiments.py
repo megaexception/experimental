@@ -57,10 +57,16 @@ class Subscripts:
 
 class Retriever:
     _retrievers = dict()
+    BASEDIR = "/home/skhalavchuk/proj/git-foo/python3"
 
     def __init__(self, login_url=None, auth=None, mode=None):
         self.mode = mode
         self.s = Session()
+        self.s.headers.update(
+            {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:56.0) Gecko/20100101 Firefox/56.0',
+             'Accept-Language': 'en-US,en;q=0.5',
+             'Referer': 'https://training.talkpython.fm/player/course/mastering-pycharm-ide/lecture/110108',
+             'DNT': '1'})
         self.schema, self.host, self.port = self.urlparse(login_url)
         self.cookies = self.retrieve_cookies()
         self.auth = auth
@@ -75,22 +81,27 @@ class Retriever:
 
     @staticmethod
     def urlparse(url):
-        schema, netloc, *_ = urlparse(url)
+        schema, netloc, *_ = urlparse(url.strip())
         if ":" in netloc:
             host, port = netloc.split(":")
+            port = int(port)
         else:
             host = netloc
-            port = 80 if schema == "http" else 443
+            if schema == "http":
+                port = 80
+            elif schema == "https":
+                port = 443
         return schema, host, port
 
-    def retrieve_cookies(self) -> dict:
-        if os.path.exists(f"data/{self.host}.cookies"):
-            with open(f"data/{self.host}.cookies") as f:
+    @classmethod
+    def retrieve_cookies(cls, host) -> dict:
+        if os.path.exists(f"{cls.BASEDIR}/data/{host}.cookies"):
+            with open(f"{cls.BASEDIR}/data/{host}.cookies") as f:
                 return json.load(f)
         return {}
 
     def store_cookies(self, cookies: dict) -> None:
-        with open(f"data/{self.host}.cookies", "wt") as f:
+        with open(f"{self.BASEDIR}/data/{self.host}.cookies", "wt") as f:
             json.dump(cookies, f)
 
     def login(self, login_url: str) -> bool:
@@ -114,6 +125,62 @@ class Retriever:
             return False
         else:
             return True
+
+    def fetch(self, url, local_file):
+        debug = False
+        if os.path.exists(local_file):
+            if debug:
+                print("Cache for '{}' present in '{}'".format(url, local_file))
+            try:
+                with open(local_file) as f:
+                    return "\n".join([line for line in f])
+            except Exception:
+                if debug:
+                    print("Failed to read cache as text")
+                # TODO: if binary: return; else: re-fetch!
+                return
+        if debug:
+            print("No cache for '{}' found, need to fetch.".format(url))
+        with self.s.get(url, stream=True) as req:
+            print("Fetching {} {}({}) (HTTP {})".format(url, req.headers.get('content-type'),
+                                                        req.headers.get('content-length'), req.status_code))
+            if req.status_code != 200:
+                print("Error fetching {}".format(url))
+            if req.apparent_encoding == "ascii":
+                if debug:
+                    print("Fetching {} as text".format(url))
+                with open(local_file, "wt") as f:
+                    f.write(req.text)
+                return req.text
+            else:
+                with open(local_file, "wb") as f:
+                    for data in req.iter_content(chunk_size=2 ** 20):
+                        f.write(data)
+                return req.content
+                # TODO: progress indicator
+                if debug:
+                    print("Fetching {} as binary".format(url))
+                total_length = req.headers.get('content-length')
+                if not total_length:
+                    if debug:
+                        print("No length available")
+                    with open(local_file, "wb") as f:
+                        f.write(req.content)
+                else:
+                    pos = 0
+                    total_length = int(total_length)
+                    if debug:
+                        print("File length: {}".format(total_length))
+                    with open(local_file, "wb") as f:
+                        for data in req.iter_content(chunk_size=4096):
+                            # print(".", end='')
+                            f.write(data)
+                            pos += len(data)
+                            sys.stdout.write(
+                                "\r[%s%s]" % (
+                                    '=' * int(50 * pos / total_length), ' ' * (50 - int(50 * pos / total_length))))
+                            sys.stdout.flush()
+                return req.content
 
     @classmethod
     def for_url(cls, login_url, **kwargs):
@@ -156,12 +223,5 @@ def nl_file(fname="/etc/passwd") -> None:
         for index, line in enumerate(f):
             print(f"{index:03}. {line}")
 
-
 if __name__ == "__main__":
-    # r1 = Retriever("http://127.0.0.1:8112/json", mode='JSON')
-    r2 = Retriever("https://rutracker.org/forum/login.php", mode="SKIP")
-    print(r2)
-    r4 = Retriever.for_url("https://rutracker.org/forum/login.php")
-    print(r4)
-    r5 = Retriever.for_url("https://rutracker.org/forum/login.php")
-    print(r5)
+    pass
